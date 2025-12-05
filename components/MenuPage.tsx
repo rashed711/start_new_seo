@@ -14,6 +14,7 @@ import { useData } from '../contexts/DataContext';
 import { useCart } from '../contexts/CartContext';
 import { normalizeArabic, getDescendantCategoryIds } from '../utils/helpers';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons/Icons';
+import { usePersistentState } from '../hooks/usePersistentState';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -28,8 +29,8 @@ export const MenuPage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     
-    // Pagination State
-    const [currentPage, setCurrentPage] = useState(1);
+    // Pagination State - Persisted to remember page number on navigation
+    const [currentPage, setCurrentPage] = usePersistentState<number>('menu_current_page', 1);
 
     const handleCartClick = useCallback(() => setIsCartOpen(true), []);
     const handleProductClick = useCallback((product: Product) => {
@@ -38,7 +39,10 @@ export const MenuPage: React.FC = () => {
 
     // Reset pagination when filters change
     useEffect(() => {
-        setCurrentPage(1);
+        // Only reset if we are not already on page 1 to avoid unnecessary state updates/renders
+        if (currentPage !== 1) {
+             setCurrentPage(1);
+        }
     }, [searchTerm, selectedCategory, selectedTags]);
 
     const visibleProducts = useMemo(() => products.filter(p => p.isVisible), [products]);
