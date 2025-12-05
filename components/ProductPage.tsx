@@ -99,12 +99,18 @@ export const ProductPage: React.FC = () => {
             .slice(0, 8);
     }, [products, productId]);
 
-    const handleProductClick = useCallback((product: Product) => {
-        window.location.hash = `#/product/${product.id}`;
+    const activePromotions = useMemo(() => {
+        const now = new Date();
+        return promotions.filter(p => p.isActive && new Date(p.endDate) > now);
+    }, [promotions]);
+
+    const handleProductClick = useCallback((clickedProduct: Product) => {
+        window.location.hash = `#/product/${clickedProduct.id}`;
     }, []);
 
-    const handleAddToCartFromList = useCallback((product: Product, quantity: number, options?: { [key: string]: string }) => {
-        addToCart(product, quantity, options);
+    const handleAddToCartFromList = useCallback((clickedProduct: Product, quantity: number, options?: { [key: string]: string }) => {
+        addToCart(clickedProduct, quantity, options);
+        setIsCartOpen(true);
     }, [addToCart]);
 
     if (!restaurantInfo) {
@@ -223,7 +229,7 @@ export const ProductPage: React.FC = () => {
                             onProductClick={handleProductClick} 
                             addToCart={handleAddToCartFromList}
                             slider={true}
-                            promotions={promotions.filter(p => p.isActive)}
+                            promotions={activePromotions}
                         />
                     </div>
                 )}
