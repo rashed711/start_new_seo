@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useSyncExternalStore, useCallback } from 'react';
 // FIX: Import the 'Product' type to resolve 'Cannot find name' errors.
 import type { Product } from '../types';
@@ -93,11 +94,20 @@ export const ProductPage: React.FC = () => {
 
     const finalTotalPrice = discountedUnitPrice * quantity;
 
+    // Filter Popular Products (Existing Logic, now used)
     const popularProducts = useMemo(() => {
         return products
             .filter(p => p.isVisible && p.isPopular && p.id !== productId)
             .slice(0, 8);
     }, [products, productId]);
+
+    // Filter Similar Products (Same Category)
+    const similarProducts = useMemo(() => {
+        if (!product) return [];
+        return products
+            .filter(p => p.isVisible && p.categoryId === product.categoryId && p.id !== productId)
+            .slice(0, 8);
+    }, [products, product, productId]);
 
     const activePromotions = useMemo(() => {
         const now = new Date();
@@ -221,8 +231,23 @@ export const ProductPage: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Similar Products Section */}
+                {similarProducts.length > 0 && (
+                    <div className="mt-12 md:mt-16">
+                         <ProductList 
+                            titleKey="similarProducts" 
+                            products={similarProducts} 
+                            onProductClick={handleProductClick} 
+                            addToCart={handleAddToCartFromList}
+                            slider={true}
+                            promotions={activePromotions}
+                        />
+                    </div>
+                )}
+
+                {/* Popular Products Section */}
                 {popularProducts.length > 0 && (
-                    <div className="mt-16">
+                    <div className="mt-8 md:mt-12">
                          <ProductList 
                             titleKey="mostPopular" 
                             products={popularProducts} 
@@ -244,5 +269,3 @@ export const ProductPage: React.FC = () => {
         </div>
     );
 };
-
-export default ProductPage;

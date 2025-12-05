@@ -1,3 +1,4 @@
+
 export default {
   "searchPlaceholder": "Search for products...",
   "filterByTags": "Filter by Tags",
@@ -77,5 +78,6 @@ export default {
   "paymentFailedMessage": "There was an issue with your payment. Please try again or choose a different payment method.",
   "paymentSuccessOrderFailed": "Your payment was successful, but we failed to create your order. Please contact support.",
   "backToHome": "Back to Home",
-  "goToPaymentLink": "Go to Payment Link"
+  "goToPaymentLink": "Go to Payment Link",
+  "similarProducts": "You Might Also Like"
 };

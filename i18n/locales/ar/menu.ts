@@ -1,3 +1,4 @@
+
 export default {
   "searchPlaceholder": "ابحث عن منتجات...",
   "filterByTags": "تصفية بالوسوم",
@@ -77,5 +78,6 @@ export default {
   "paymentFailedMessage": "حدثت مشكلة أثناء معالجة الدفع. يرجى المحاولة مرة أخرى أو اختيار طريقة دفع مختلفة.",
   "paymentSuccessOrderFailed": "تم الدفع بنجاح، لكن فشل إنشاء طلبك. برجاء التواصل مع الدعم الفني.",
   "backToHome": "العودة للرئيسية",
-  "goToPaymentLink": "الانتقال إلى رابط الدفع"
+  "goToPaymentLink": "الانتقال إلى رابط الدفع",
+  "similarProducts": "قد يعجبك أيضاً"
 };
