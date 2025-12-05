@@ -1,0 +1,15 @@
+
+{
+  "myProfile": "ملفي الشخصي",
+  "profilePicture": "الصورة الشخصية",
+  "changeProfilePicture": "تغيير الصورة الشخصية",
+  "security": "الأمان",
+  "change": "تغيير",
+  "yourOrders": "طلباتك",
+  "activeOrders": "الطلبات النشطة",
+  "pastOrders": "الطلبات السابقة",
+  "orderId": "رقم الطلب",
+  "customerFeedback": "تقييمك",
+  "yourRating": "تقييمك",
+  "yourComment": "تعليقك (اختياري)"
+}
