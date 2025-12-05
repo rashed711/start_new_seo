@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
+
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Product, CartItem, Order, OrderStatus, OrderType, Category, Promotion } from '../types';
 import { Header } from './Header';
 import { SearchAndFilter } from './SearchAndFilter';
@@ -12,6 +13,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useCart } from '../contexts/CartContext';
 import { normalizeArabic, getDescendantCategoryIds } from '../utils/helpers';
+import { ChevronLeftIcon, ChevronRightIcon } from './icons/Icons';
+
+const ITEMS_PER_PAGE = 20;
 
 export const MenuPage: React.FC = () => {
     const { language, setIsProcessing, t } = useUI();
@@ -23,11 +27,19 @@ export const MenuPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
 
     const handleCartClick = useCallback(() => setIsCartOpen(true), []);
     const handleProductClick = useCallback((product: Product) => {
         window.location.hash = `#/product/${product.id}`;
     }, []);
+
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, selectedCategory, selectedTags]);
 
     const visibleProducts = useMemo(() => products.filter(p => p.isVisible), [products]);
     
@@ -57,6 +69,24 @@ export const MenuPage: React.FC = () => {
         });
       }, [searchTerm, selectedCategory, selectedTags, language, visibleProducts, categories]);
       
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+    const paginatedProducts = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredProducts, currentPage]);
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+            // Scroll to the top of the product list
+            const listElement = document.getElementById('full-menu-list');
+            if (listElement) {
+                listElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    };
+
     const popularProducts = useMemo(() => visibleProducts.filter(p => p.isPopular).slice(0, 8), [visibleProducts]);
     const newProducts = useMemo(() => visibleProducts.filter(p => p.isNew).slice(0, 4), [visibleProducts]);
 
@@ -64,7 +94,8 @@ export const MenuPage: React.FC = () => {
         addToCart(product, quantity, options);
     }, [addToCart]);
       
-    
+    const isRtl = language === 'ar';
+
     if (!restaurantInfo) return null;
 
     return (
@@ -106,16 +137,43 @@ export const MenuPage: React.FC = () => {
                         setSelectedTags={setSelectedTags}
                     />
 
-                    <div className="relative z-10">
+                    <div id="full-menu-list" className="relative z-10 scroll-mt-24">
                         <ProductList 
                             titleKey="fullMenu"
-                            products={filteredProducts} 
+                            products={paginatedProducts} 
                             onProductClick={handleProductClick} 
                             addToCart={handleAddToCartWithoutOpeningCart}
                             slider={false}
                             promotions={activePromotions}
                         />
                     </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-4 mt-8 pb-8 animate-fade-in">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="p-3 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary-500 hover:text-white disabled:opacity-50 disabled:hover:bg-slate-200 disabled:cursor-not-allowed transition-all"
+                                aria-label="Previous Page"
+                            >
+                                {isRtl ? <ChevronRightIcon className="w-5 h-5" /> : <ChevronLeftIcon className="w-5 h-5" />}
+                            </button>
+                            
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                {currentPage} <span className="mx-1 text-slate-400">/</span> {totalPages}
+                            </span>
+
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="p-3 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary-500 hover:text-white disabled:opacity-50 disabled:hover:bg-slate-200 disabled:cursor-not-allowed transition-all"
+                                aria-label="Next Page"
+                            >
+                                {isRtl ? <ChevronLeftIcon className="w-5 h-5" /> : <ChevronRightIcon className="w-5 h-5" />}
+                            </button>
+                        </div>
+                    )}
                 </main>
             </div>
 
