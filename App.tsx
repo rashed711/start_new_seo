@@ -1,16 +1,16 @@
-
-
-
-
-import React, { useSyncExternalStore, useMemo, useEffect, lazy, Suspense } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, useLocation, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { UIProvider, useUI } from './contexts/UIContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
 import { CartProvider } from './contexts/CartContext';
 import { OrderProvider } from './contexts/OrderContext';
+import { UserManagementProvider } from './contexts/UserManagementContext';
+import { TreasuryProvider } from './contexts/TreasuryContext';
+import { InventoryProvider } from './contexts/InventoryContext';
 import { APP_CONFIG } from './utils/config';
 
-// Lazy load page components for better performance
+// Lazy load page components
 const MenuPage = lazy(() => import('./components/MenuPage').then(module => ({ default: module.MenuPage })));
 const ProductPage = lazy(() => import('./components/ProductPage').then(module => ({ default: module.ProductPage })));
 const LoginPage = lazy(() => import('./components/auth/LoginPage').then(module => ({ default: module.LoginPage })));
@@ -24,97 +24,104 @@ const ActionHandlerPage = lazy(() => import('./components/auth/ActionHandlerPage
 const CompleteProfilePage = lazy(() => import('./components/auth/CompleteProfilePage').then(module => ({ default: module.CompleteProfilePage })));
 const PaymentStatusPage = lazy(() => import('./components/checkout/PaymentStatusPage'));
 
-
-// Non-page components can be imported directly
 import { ToastNotification } from './components/ToastNotification';
 import { TopProgressBar } from './components/TopProgressBar';
 import { ChangePasswordModal } from './components/profile/ChangePasswordModal';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { DeactivatedScreen } from './components/DeactivatedScreen';
 
-
-// Subscribes to the browser's hashchange event.
-function subscribe(callback: () => void) {
-  window.addEventListener('hashchange', callback);
-  return () => {
-    window.removeEventListener('hashchange', callback);
-  };
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
 }
 
-// Gets the current value of the browser's hash.
-function getSnapshot() {
-  return window.location.hash;
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
 }
 
-const AppContent: React.FC = () => {
-  const {
-    language,
-    toast,
-    isChangePasswordModalOpen,
-    setIsChangePasswordModalOpen,
-    isLoading,
-    isProcessing,
-    transitionStage,
-    progress,
-    showProgress
-  } = useUI();
+// Error Boundary
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) { console.error("Uncaught error:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-gray-100">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong.</h1>
+          <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Reload Page</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Wrapper for AdminArea to extract params
+const AdminRoute = () => {
+    const params = useParams();
+    // In React Router v6 *, the params are available as '*'
+    const wildCard = params['*']; 
+    const parts = wildCard ? wildCard.split('/') : [];
+    const activeSubRoute = parts[0] || 'dashboard';
+    const reportSubRoute = parts[1];
+    
+    return <AdminArea activeSubRoute={activeSubRoute} reportSubRoute={reportSubRoute} />;
+};
+
+const AppContent = () => {
+  const { language, toast, isChangePasswordModalOpen, setIsChangePasswordModalOpen, isLoading, isProcessing, transitionStage, progress, showProgress } = useUI();
   const { currentUser, roles, isCompletingProfile } = useAuth();
   const { restaurantInfo } = useData();
+  const location = useLocation();
 
-  // Routing State
-  const hash = useSyncExternalStore(subscribe, getSnapshot, () => '');
-  const displayedRoute = useMemo(() => hash || (restaurantInfo?.defaultPage === 'social' ? '#/social' : '#/'), [hash, restaurantInfo]);
-
-  // Set document title dynamically from config
+  // Redirect legacy hash links
+  const navigate = useNavigate();
   useEffect(() => {
-    document.title = restaurantInfo ? restaurantInfo.name[language] : APP_CONFIG.APP_NAME[language];
+    if (window.location.hash.startsWith('#/')) {
+        const path = window.location.hash.substring(1);
+        navigate(path, { replace: true });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (restaurantInfo) document.title = restaurantInfo.name[language];
   }, [language, restaurantInfo]);
+  
+  const renderRoutes = () => {
+    if (isCompletingProfile) return <CompleteProfilePage />;
+    if (isLoading && !restaurantInfo) return <LoadingOverlay isVisible={true} />;
+    if (!restaurantInfo && !isLoading) return <div className="text-center p-10">Failed to load data.</div>;
+    if (!restaurantInfo) return null;
 
-
-
-  const renderPage = () => {
-    const routeParts = displayedRoute.split('?')[0].split('/');
-    const baseRoute = routeParts.slice(0, 3).join('/'); // #/admin/reports
-
-    if (isCompletingProfile) {
-        return <CompleteProfilePage />;
-    }
-
-    if (isLoading || !restaurantInfo) {
-      return <LoadingOverlay isVisible={true} />;
-    }
-    
-    // System Activation Check Logic
     const isDeactivated = restaurantInfo.activationEndDate && new Date() > new Date(restaurantInfo.activationEndDate);
     const superAdminRole = roles.find(r => r.name.en.toLowerCase() === 'superadmin');
     const isSuperAdmin = currentUser?.role === superAdminRole?.key;
+    const canBypass = (isSuperAdmin && location.pathname.startsWith('/admin')) || location.pathname.startsWith('/login');
 
-    // A super admin can access any admin page even if deactivated. Anyone can access login.
-    const canBypassDeactivation = 
-        (isSuperAdmin && baseRoute.startsWith('#/admin')) || 
-        baseRoute.startsWith('#/login');
-
-    if (isDeactivated && !canBypassDeactivation) {
-        return <DeactivatedScreen />;
-    }
-
-    if (baseRoute.startsWith('#/admin')) {
-        const adminSubRoute = routeParts[2] || 'dashboard'; // For /admin/ or /admin
-        const reportSubRoute = routeParts[3] || 'dashboard'; // For /reports/dashboard etc.
-        return <AdminArea activeSubRoute={adminSubRoute} reportSubRoute={reportSubRoute} />;
-    }
-    if (baseRoute.startsWith('#/login')) return <LoginPage />;
-    if (baseRoute.startsWith('#/forgot-password')) return <ForgotPasswordPage />;
-    if (baseRoute.startsWith('#/profile')) return <ProfilePage />;
-    if (baseRoute.startsWith('#/checkout')) return <CheckoutPage />;
-    if (baseRoute.startsWith('#/track')) return <OrderTrackingPage />;
-    if (baseRoute.startsWith('#/social')) return <SocialPage />;
-    if (baseRoute.startsWith('#/action')) return <ActionHandlerPage />;
-    if (baseRoute.startsWith('#/payment-status')) return <PaymentStatusPage />;
-    if (baseRoute.startsWith('#/product')) return <ProductPage />;
-
-    // Fallback to menu page
-    return <MenuPage />;
+    if (isDeactivated && !canBypass) return <DeactivatedScreen />;
+    
+    const DefaultPage = restaurantInfo.defaultPage === 'social' ? SocialPage : MenuPage;
+    
+    return (
+        <Routes>
+            <Route path="/admin/*" element={<AdminRoute />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/track" element={<OrderTrackingPage />} />
+            <Route path="/social" element={<SocialPage />} />
+            <Route path="/action" element={<ActionHandlerPage />} />
+            <Route path="/payment-status" element={<PaymentStatusPage />} />
+            <Route path="/product/:slug" element={<ProductPage />} />
+            <Route path="/" element={<DefaultPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    );
   };
   
   return (
@@ -122,34 +129,37 @@ const AppContent: React.FC = () => {
       <TopProgressBar progress={progress} show={showProgress} />
       <div className={`transition-opacity duration-300 ${transitionStage === 'in' ? 'opacity-100' : 'opacity-0'}`}>
         <Suspense fallback={<LoadingOverlay isVisible={true} />}>
-          {renderPage()}
+          {renderRoutes()}
         </Suspense>
       </div>
       <ToastNotification message={toast.message} isVisible={toast.isVisible} />
       <LoadingOverlay isVisible={isProcessing && !isLoading} />
-      {isChangePasswordModalOpen && currentUser && (
-          <ChangePasswordModal
-              onClose={() => setIsChangePasswordModalOpen(false)}
-          />
-      )}
+      {isChangePasswordModalOpen && currentUser && <ChangePasswordModal onClose={() => setIsChangePasswordModalOpen(false)} />}
     </>
   );
 };
 
-
-const App: React.FC = () => {
+const App = () => {
   return (
-    <UIProvider>
-      <AuthProvider>
-        <DataProvider>
-          <CartProvider>
-            <OrderProvider>
-              <AppContent />
-            </OrderProvider>
-          </CartProvider>
-        </DataProvider>
-      </AuthProvider>
-    </UIProvider>
+    <ErrorBoundary>
+      <UIProvider>
+        <AuthProvider>
+          <DataProvider>
+            <CartProvider>
+              <UserManagementProvider>
+                <TreasuryProvider>
+                  <InventoryProvider>
+                    <OrderProvider>
+                      <AppContent />
+                    </OrderProvider>
+                  </InventoryProvider>
+                </TreasuryProvider>
+              </UserManagementProvider>
+            </CartProvider>
+          </DataProvider>
+        </AuthProvider>
+      </UIProvider>
+    </ErrorBoundary>
   );
 };
 

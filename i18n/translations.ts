@@ -1,19 +1,19 @@
 import type { Language } from '../types';
 import { APP_CONFIG } from '../utils/config';
 
-// Import English translations from .ts files
-import enAdmin from './locales/en/admin.ts';
-import enAuth from './locales/en/auth.ts';
-import enCommon from './locales/en/common.ts';
-import enMenu from './locales/en/menu.ts';
-import enProfile from './locales/en/profile.ts';
+// Import English translations
+import enAdmin from './locales/en/admin';
+import enAuth from './locales/en/auth';
+import enCommon from './locales/en/common';
+import enMenu from './locales/en/menu';
+import enProfile from './locales/en/profile';
 
-// Import Arabic translations from .ts files
-import arAdmin from './locales/ar/admin.ts';
-import arAuth from './locales/ar/auth.ts';
-import arCommon from './locales/ar/common.ts';
-import arMenu from './locales/ar/menu.ts';
-import arProfile from './locales/ar/profile.ts';
+// Import Arabic translations
+import arAdmin from './locales/ar/admin';
+import arAuth from './locales/ar/auth';
+import arCommon from './locales/ar/common';
+import arMenu from './locales/ar/menu';
+import arProfile from './locales/ar/profile';
 
 export const translations = {
   en: {
