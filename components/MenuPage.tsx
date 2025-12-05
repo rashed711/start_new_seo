@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { Product, CartItem, Order, OrderStatus, OrderType, Category, Promotion } from '../types';
 import { Header } from './Header';
 import { SearchAndFilter } from './SearchAndFilter';
@@ -25,20 +25,29 @@ export const MenuPage: React.FC = () => {
     
     const [isCartOpen, setIsCartOpen] = useState(false);
     
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    // Persist Filter States so user returns to exact same view
+    const [searchTerm, setSearchTerm] = usePersistentState<string>('menu_search_term', '');
+    const [selectedCategory, setSelectedCategory] = usePersistentState<number | null>('menu_selected_category', null);
+    const [selectedTags, setSelectedTags] = usePersistentState<string[]>('menu_selected_tags', []);
     
     // Pagination State - Persisted to remember page number on navigation
     const [currentPage, setCurrentPage] = usePersistentState<number>('menu_current_page', 1);
+
+    // Ref to track first render to avoid resetting page on mount
+    const isFirstRender = useRef(true);
 
     const handleCartClick = useCallback(() => setIsCartOpen(true), []);
     const handleProductClick = useCallback((product: Product) => {
         window.location.hash = `#/product/${product.id}`;
     }, []);
 
-    // Reset pagination when filters change
+    // Reset pagination when filters change, BUT skip the first render (restoration from storage)
     useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
         // Only reset if we are not already on page 1 to avoid unnecessary state updates/renders
         if (currentPage !== 1) {
              setCurrentPage(1);
@@ -75,6 +84,14 @@ export const MenuPage: React.FC = () => {
       
     // Pagination Logic
     const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+    
+    // Ensure currentPage is valid (e.g. if filtered results shrink)
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(1);
+        }
+    }, [totalPages, currentPage, setCurrentPage]);
+
     const paginatedProducts = useMemo(() => {
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
