@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SunIcon, MoonIcon, CartIcon, LanguageIcon, UserIcon, FullscreenIcon, ExitFullscreenIcon, ShieldCheckIcon, LogoutIcon, InstallIcon } from './icons/Icons';
 import { formatNumber } from '../utils/helpers';
 import { useUI } from '../contexts/UIContext';
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = React.memo(({ onCartClick }) => {
   const { restaurantInfo } = useData();
   const { cartItems } = useCart();
   const cartItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const navigate = useNavigate();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -29,7 +31,7 @@ export const Header: React.FC<HeaderProps> = React.memo(({ onCartClick }) => {
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     e.preventDefault();
     setIsUserMenuOpen(false); // Close menu on navigation
-    window.location.hash = path;
+    navigate(path);
   };
 
   const toggleFullscreen = () => {

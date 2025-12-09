@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Language, RestaurantInfo } from '../types';
 import { useUI } from '../contexts/UIContext';
 import { useData } from '../contexts/DataContext';
@@ -7,8 +9,9 @@ interface HeroSectionProps {}
 
 export const HeroSection: React.FC<HeroSectionProps> = () => {
   const { t, language } = useUI();
-  const { restaurantInfo } = useData(); // Assuming restaurantInfo is available in UIContext or DataContext
+  const { restaurantInfo } = useData();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const navigate = useNavigate();
 
   const handleScrollToMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -20,7 +23,7 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
   
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     e.preventDefault();
-    window.location.hash = path;
+    navigate(path);
   };
   
   if (!restaurantInfo) return null;

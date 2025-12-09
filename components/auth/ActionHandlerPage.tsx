@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom'; // Placeholder, we'll parse hash manually
 import { auth } from '../../firebase';
 import { applyActionCode } from 'firebase/auth';
 import { useUI } from '../../contexts/UIContext';

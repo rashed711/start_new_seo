@@ -1,8 +1,6 @@
 
-
-
-
-import React, { useSyncExternalStore, useMemo, useEffect, lazy, Suspense } from 'react';
+import React, { useMemo, useEffect, lazy, Suspense } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { UIProvider, useUI } from './contexts/UIContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
@@ -33,19 +31,6 @@ import { LoadingOverlay } from './components/LoadingOverlay';
 import { DeactivatedScreen } from './components/DeactivatedScreen';
 
 
-// Subscribes to the browser's hashchange event.
-function subscribe(callback: () => void) {
-  window.addEventListener('hashchange', callback);
-  return () => {
-    window.removeEventListener('hashchange', callback);
-  };
-}
-
-// Gets the current value of the browser's hash.
-function getSnapshot() {
-  return window.location.hash;
-}
-
 const AppContent: React.FC = () => {
   const {
     language,
@@ -60,22 +45,29 @@ const AppContent: React.FC = () => {
   } = useUI();
   const { currentUser, roles, isCompletingProfile } = useAuth();
   const { restaurantInfo } = useData();
+  
+  // React Router Hooks
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Routing State
-  const hash = useSyncExternalStore(subscribe, getSnapshot, () => '');
-  const displayedRoute = useMemo(() => hash || (restaurantInfo?.defaultPage === 'social' ? '#/social' : '#/'), [hash, restaurantInfo]);
+  const displayedRoute = useMemo(() => {
+      // Default to /social if configured, else /
+      if (location.pathname === '/' && restaurantInfo?.defaultPage === 'social') {
+          return '/social';
+      }
+      return location.pathname || '/';
+  }, [location.pathname, restaurantInfo]);
 
   // Set document title dynamically from config
   useEffect(() => {
     document.title = restaurantInfo ? restaurantInfo.name[language] : APP_CONFIG.APP_NAME[language];
   }, [language, restaurantInfo]);
 
-
-
   const renderPage = () => {
-    const routeParts = displayedRoute.split('?')[0].split('/');
-    const baseRoute = routeParts.slice(0, 3).join('/'); // #/admin/reports
-
+    const routeParts = displayedRoute.split('/').filter(Boolean); // Split and remove empty strings
+    // Reconstruct base routes logic. 
+    // /admin/orders -> parts=['admin', 'orders']
+    
     if (isCompletingProfile) {
         return <CompleteProfilePage />;
     }
@@ -89,31 +81,33 @@ const AppContent: React.FC = () => {
     const superAdminRole = roles.find(r => r.name.en.toLowerCase() === 'superadmin');
     const isSuperAdmin = currentUser?.role === superAdminRole?.key;
 
+    const baseRoute = '/' + (routeParts[0] || '');
+
     // A super admin can access any admin page even if deactivated. Anyone can access login.
     const canBypassDeactivation = 
-        (isSuperAdmin && baseRoute.startsWith('#/admin')) || 
-        baseRoute.startsWith('#/login');
+        (isSuperAdmin && baseRoute.startsWith('/admin')) || 
+        baseRoute.startsWith('/login');
 
     if (isDeactivated && !canBypassDeactivation) {
         return <DeactivatedScreen />;
     }
 
-    if (baseRoute.startsWith('#/admin')) {
-        const adminSubRoute = routeParts[2] || 'dashboard'; // For /admin/ or /admin
-        const reportSubRoute = routeParts[3] || 'dashboard'; // For /reports/dashboard etc.
+    if (baseRoute.startsWith('/admin')) {
+        const adminSubRoute = routeParts[1] || 'dashboard'; // /admin/dashboard
+        const reportSubRoute = routeParts[2] || 'dashboard'; // /admin/reports/sales
         return <AdminArea activeSubRoute={adminSubRoute} reportSubRoute={reportSubRoute} />;
     }
-    if (baseRoute.startsWith('#/login')) return <LoginPage />;
-    if (baseRoute.startsWith('#/forgot-password')) return <ForgotPasswordPage />;
-    if (baseRoute.startsWith('#/profile')) return <ProfilePage />;
-    if (baseRoute.startsWith('#/checkout')) return <CheckoutPage />;
-    if (baseRoute.startsWith('#/track')) return <OrderTrackingPage />;
-    if (baseRoute.startsWith('#/social')) return <SocialPage />;
-    if (baseRoute.startsWith('#/action')) return <ActionHandlerPage />;
-    if (baseRoute.startsWith('#/payment-status')) return <PaymentStatusPage />;
-    if (baseRoute.startsWith('#/product')) return <ProductPage />;
+    if (baseRoute.startsWith('/login')) return <LoginPage />;
+    if (baseRoute.startsWith('/forgot-password')) return <ForgotPasswordPage />;
+    if (baseRoute.startsWith('/profile')) return <ProfilePage />;
+    if (baseRoute.startsWith('/checkout')) return <CheckoutPage />;
+    if (baseRoute.startsWith('/track')) return <OrderTrackingPage />;
+    if (baseRoute.startsWith('/social')) return <SocialPage />;
+    if (baseRoute.startsWith('/action')) return <ActionHandlerPage />;
+    if (baseRoute.startsWith('/payment-status')) return <PaymentStatusPage />;
+    if (baseRoute.startsWith('/product')) return <ProductPage />;
 
-    // Fallback to menu page
+    // Fallback to menu page (root /)
     return <MenuPage />;
   };
   

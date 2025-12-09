@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useCallback, useContext, useMemo } from 'react';
 import type { User, Permission, UserRole, Role } from '../types';
 import { APP_CONFIG } from '../utils/config';
@@ -19,6 +20,7 @@ import {
 } from '../firebase';
 // @FIX: Corrected import syntax for the FirebaseUser type to resolve a module declaration error.
 import type { FirebaseUser } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 
 
 interface AuthContextType {
@@ -63,6 +65,7 @@ const resolveImageUrl = (path: string | undefined): string => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { setIsProcessing, showToast, t } = useUI();
+    const navigate = useNavigate();
     
     const [currentUser, setCurrentUser] = useState<User | null>(() => {
         const savedUser = localStorage.getItem('restaurant_currentUser');
@@ -106,8 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsCompletingProfile(false);
         setNewUserFirebaseData(null);
         setIsAuthenticating(false);
-        window.location.hash = '#/login';
-    }, [setCurrentUser, setIsCompletingProfile, setNewUserFirebaseData]);
+        navigate('/login');
+    }, [setCurrentUser, setIsCompletingProfile, setNewUserFirebaseData, navigate]);
 
      useEffect(() => {
         let isMounted = true;
@@ -183,12 +186,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 address_details: dbUser.address_details
                             });
                             setIsCompletingProfile(false);
-                            if (window.location.hash.startsWith('#/login')) {
+                            if (window.location.pathname.startsWith('/login')) {
                                const customerRole = roles.find(r => r.name.en.toLowerCase() === 'customer');
                                if (customerRole && String(dbUser.role_id) === customerRole.key) {
-                                   window.location.hash = '#/profile';
+                                   navigate('/profile');
                                } else {
-                                   window.location.hash = '#/admin';
+                                   navigate('/admin');
                                }
                             }
                         }
@@ -234,23 +237,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isMounted = false;
             unsubscribe();
         };
-    }, [roles, setIsProcessing, showToast, logout, t.pleaseVerifyEmail, t.accountVerificationFailed]);
+    }, [roles, setIsProcessing, showToast, logout, t.pleaseVerifyEmail, t.accountVerificationFailed, navigate]);
 
     // This effect handles redirection for non-Firebase (manual) logins, like staff.
     useEffect(() => {
-        if (currentUser && !currentUser.firebase_uid && !currentUser.google_id && window.location.hash.startsWith('#/login')) {
+        if (currentUser && !currentUser.firebase_uid && !currentUser.google_id && window.location.pathname.startsWith('/login')) {
             const customerRole = roles.find(r => r.name.en.toLowerCase() === 'customer');
             // If not a customer, redirect to admin.
             if (!customerRole || currentUser.role !== customerRole.key) {
-                window.location.hash = '#/admin';
+                navigate('/admin');
             }
         }
-    }, [currentUser, roles]);
+    }, [currentUser, roles, navigate]);
     
     useEffect(() => {
-        // This effect ensures that isAuthenticating is turned off only after
-        // the currentUser state has been fully updated in React. It runs on initial
-        // load and whenever a user logs in or out.
         setIsAuthenticating(false);
     }, [currentUser]);
 
@@ -405,12 +405,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!userObject.mobile || !userObject.governorate || !userObject.address_details) {
                 setIsCompletingProfile(true);
             } else {
-                 if (window.location.hash.startsWith('#/login')) {
+                 if (window.location.pathname.startsWith('/login')) {
                     const customerRole = roles.find(r => r.name.en.toLowerCase() === 'customer');
                     if (customerRole && userObject.role === customerRole.key) {
-                        window.location.hash = '#/profile';
+                        navigate('/profile');
                     } else {
-                        window.location.hash = '#/admin';
+                        navigate('/admin');
                     }
                  }
             }
@@ -422,7 +422,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
             setIsProcessing(false);
         }
-    }, [setIsProcessing, setCurrentUser, setIsCompletingProfile, t, roles]);
+    }, [setIsProcessing, setCurrentUser, setIsCompletingProfile, t, roles, navigate]);
 
     const sendPasswordResetLink = useCallback(async (email: string): Promise<string | null> => {
         setIsProcessing(true);
@@ -596,7 +596,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             setIsCompletingProfile(false);
             setNewUserFirebaseData(null); // Always clear this after completion attempt
-            window.location.hash = '#/profile';
+            navigate('/profile');
             
         } catch (error: any) {
             console.error("Complete profile error:", error);
@@ -604,7 +604,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
             setIsProcessing(false);
         }
-    }, [newUserFirebaseData, currentUser, setIsProcessing, showToast, t.profileSaveFailed, setCurrentUser, updateUserProfile]);
+    }, [newUserFirebaseData, currentUser, setIsProcessing, showToast, t.profileSaveFailed, setCurrentUser, updateUserProfile, navigate]);
 
     const changeCurrentUserPassword = useCallback(async (currentPassword: string, newPassword: string): Promise<string | null> => {
         setIsProcessing(true);

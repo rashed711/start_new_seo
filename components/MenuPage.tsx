@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Product, CartItem, Order, OrderStatus, OrderType, Category, Promotion } from '../types';
 import { Header } from './Header';
 import { SearchAndFilter } from './SearchAndFilter';
@@ -22,6 +23,7 @@ export const MenuPage: React.FC = () => {
     const { language, setIsProcessing, t } = useUI();
     const { products, promotions, categories, tags, restaurantInfo } = useData();
     const { addToCart } = useCart();
+    const navigate = useNavigate();
     
     const [isCartOpen, setIsCartOpen] = useState(false);
     
@@ -38,8 +40,8 @@ export const MenuPage: React.FC = () => {
 
     const handleCartClick = useCallback(() => setIsCartOpen(true), []);
     const handleProductClick = useCallback((product: Product) => {
-        window.location.hash = `#/product/${product.id}`;
-    }, []);
+        navigate(`/product/${product.id}`);
+    }, [navigate]);
 
     // Reset pagination when filters change, BUT skip the first render (restoration from storage)
     useEffect(() => {
