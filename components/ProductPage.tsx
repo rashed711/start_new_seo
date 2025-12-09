@@ -29,9 +29,18 @@ export const ProductPage: React.FC = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [selectedOptions, setSelectedOptions] = useState<{ [key: string]: string }>({});
+    
+    // Image loading state handling
     const [isImageLoaded, setIsImageLoaded] = useState(false);
+    const [currentImage, setCurrentImage] = useState<string | null>(null);
 
     const product = useMemo(() => products.find(p => p.id === productId), [products, productId]);
+    
+    // Correctly reset image state during render if product changes to avoid race conditions with onLoad
+    if (product && product.image !== currentImage) {
+        setCurrentImage(product.image);
+        setIsImageLoaded(false);
+    }
     
     // Set default options when the product is loaded
     useEffect(() => {
@@ -45,7 +54,7 @@ export const ProductPage: React.FC = () => {
             setSelectedOptions(defaultOptions);
         }
         setQuantity(1); // Reset quantity
-        setIsImageLoaded(false); // Reset image load state
+        // Note: isImageLoaded is reset in the render block above
         window.scrollTo(0, 0); // Scroll to top on product change
     }, [product]);
 
@@ -144,10 +153,12 @@ export const ProductPage: React.FC = () => {
                             <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg">
                                 {!isImageLoaded && <div className="absolute inset-0 bg-slate-200 dark:bg-slate-700 animate-pulse"></div>}
                                 <img 
+                                  key={product.image}
                                   src={product.image} 
                                   alt={product.name[language]} 
                                   className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`} 
                                   onLoad={() => setIsImageLoaded(true)}
+                                  loading="eager"
                                 />
                             </div>
                         </div>

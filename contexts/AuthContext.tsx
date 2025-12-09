@@ -8,7 +8,6 @@ import {
     onAuthStateChanged, 
     signOut, 
     getRedirectResult, 
-    GoogleAuthProvider,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     sendEmailVerification,
@@ -20,7 +19,7 @@ import {
 } from '../firebase';
 // @FIX: Corrected import syntax for the FirebaseUser type to resolve a module declaration error.
 import type { FirebaseUser } from '../firebase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 
 interface AuthContextType {
@@ -66,6 +65,7 @@ const resolveImageUrl = (path: string | undefined): string => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { setIsProcessing, showToast, t } = useUI();
     const navigate = useNavigate();
+    const location = useLocation();
     
     const [currentUser, setCurrentUser] = useState<User | null>(() => {
         const savedUser = localStorage.getItem('restaurant_currentUser');
@@ -186,14 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 address_details: dbUser.address_details
                             });
                             setIsCompletingProfile(false);
-                            if (window.location.pathname.startsWith('/login')) {
-                               const customerRole = roles.find(r => r.name.en.toLowerCase() === 'customer');
-                               if (customerRole && String(dbUser.role_id) === customerRole.key) {
-                                   navigate('/profile');
-                               } else {
-                                   navigate('/admin');
-                               }
-                            }
+                            // Navigation logic is handled by the unified useEffect
                         }
                     } else if (response.status === 404 && result.error.includes("not found")) {
                         if (isMounted) {
@@ -239,16 +232,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
     }, [roles, setIsProcessing, showToast, logout, t.pleaseVerifyEmail, t.accountVerificationFailed, navigate]);
 
-    // This effect handles redirection for non-Firebase (manual) logins, like staff.
+    // Unified redirection effect for all login types (Manual, Google, etc.)
     useEffect(() => {
-        if (currentUser && !currentUser.firebase_uid && !currentUser.google_id && window.location.pathname.startsWith('/login')) {
-            const customerRole = roles.find(r => r.name.en.toLowerCase() === 'customer');
-            // If not a customer, redirect to admin.
-            if (!customerRole || currentUser.role !== customerRole.key) {
+        // HashRouter handles the # part, but location.pathname gives the path relative to the hash root.
+        // Normalize path to handle potential trailing slashes
+        const currentPath = location.pathname.toLowerCase().replace(/\/+$/, '');
+        const isLoginPage = currentPath === '/login';
+        
+        if (currentUser && isLoginPage && !isCompletingProfile) {
+            const customerRole = roles.find(r => r.name.en.toLowerCase().trim() === 'customer');
+            
+            // Safe check for role matching (convert both to strings to be safe)
+            const isCustomer = customerRole && String(currentUser.role) === String(customerRole.key);
+
+            if (isCustomer) {
+                navigate('/profile');
+            } else {
                 navigate('/admin');
             }
         }
-    }, [currentUser, roles, navigate]);
+    }, [currentUser, roles, navigate, location.pathname, isCompletingProfile]);
     
     useEffect(() => {
         setIsAuthenticating(false);
@@ -289,6 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const profilePictureUrl = resolveImageUrl(dbUser.profile_picture) || `https://placehold.co/512x512/60a5fa/white?text=${(dbUser.name || 'U').charAt(0).toUpperCase()}`;
 
             setCurrentUser({ id: Number(dbUser.id), name: dbUser.name, mobile: dbUser.mobile, password: '', role: roleFromApi, profilePicture: profilePictureUrl });
+            setIsCompletingProfile(false); // Ensure this is reset on successful login
             return null;
         } catch (error) {
             console.error('Login error:', error);
@@ -348,6 +352,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsProcessing(true);
         try {
             await signInWithEmailAndPassword(auth, email, password);
+            setIsCompletingProfile(false); // Reset this on explicit login attempt
             return null; // onAuthStateChanged will handle the rest
         } catch (error: any) {
             console.error("Email login error:", error);
@@ -405,16 +410,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!userObject.mobile || !userObject.governorate || !userObject.address_details) {
                 setIsCompletingProfile(true);
             } else {
-                 if (window.location.pathname.startsWith('/login')) {
-                    const customerRole = roles.find(r => r.name.en.toLowerCase() === 'customer');
-                    if (customerRole && userObject.role === customerRole.key) {
-                        navigate('/profile');
-                    } else {
-                        navigate('/admin');
-                    }
-                 }
+                setIsCompletingProfile(false);
             }
-    
+            
             return null; // Success
         } catch (error) {
             console.error('Google login network error:', error);
@@ -422,7 +420,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
             setIsProcessing(false);
         }
-    }, [setIsProcessing, setCurrentUser, setIsCompletingProfile, t, roles, navigate]);
+    }, [setIsProcessing, setCurrentUser, setIsCompletingProfile, t]);
 
     const sendPasswordResetLink = useCallback(async (email: string): Promise<string | null> => {
         setIsProcessing(true);

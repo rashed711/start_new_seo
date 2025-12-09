@@ -14,30 +14,58 @@ export const SocialPage: React.FC = () => {
         navigate(path);
     };
 
+    // Safety check: Ensure restaurantInfo exists before rendering
     if (!restaurantInfo) return null;
 
-    const visibleLinks = restaurantInfo.socialLinks.filter(link => link.isVisible);
+    // Safety check: Ensure socialLinks is an array before filtering
+    const visibleLinks = (Array.isArray(restaurantInfo.socialLinks) ? restaurantInfo.socialLinks : []).filter(link => link && link.isVisible);
+
+    // Helper to safely get localized text
+    const getName = () => restaurantInfo.name?.[language] || restaurantInfo.name?.['en'] || '';
+    const getDescription = () => restaurantInfo.description?.[language] || restaurantInfo.description?.['en'] || '';
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 dark:bg-slate-950 p-4 bg-gradient-to-br from-slate-50 to-slate-200 dark:from-slate-900 dark:to-slate-950">
             <div className="w-full max-w-md mx-auto text-center animate-fade-in-up bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/30 dark:border-slate-800">
                 
-                <img src={restaurantInfo.logo} alt="logo" className="w-28 h-28 rounded-full mx-auto mb-4 shadow-lg border-4 border-white dark:border-slate-800" />
-                <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-1">{restaurantInfo.name[language]}</h1>
-                <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xs mx-auto">{restaurantInfo.description[language]}</p>
+                {restaurantInfo.logo ? (
+                    <img 
+                        src={restaurantInfo.logo} 
+                        alt="logo" 
+                        className="w-28 h-28 rounded-full mx-auto mb-4 shadow-lg border-4 border-white dark:border-slate-800 object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
+                    />
+                ) : null}
+                
+                <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-1">
+                    {getName()}
+                </h1>
+                
+                <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xs mx-auto">
+                    {getDescription()}
+                </p>
 
                 <div className="grid grid-cols-2 gap-4 mb-10">
                     {visibleLinks.map((link, index) => (
                         <a 
-                            key={link.id}
-                            href={link.url}
+                            key={link.id || index}
+                            href={link.url || '#'}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="group flex flex-col items-center justify-center gap-2 p-4 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-xl border border-white/50 dark:border-slate-700/50 hover:-translate-y-1 transition-all duration-300 animate-fade-in"
                             style={{ animationDelay: `${index * 100}ms` }}
                         >
-                            <img src={link.icon} alt={`${link.name} icon`} className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-110" />
-                            <span className="font-semibold text-base text-slate-700 dark:text-slate-200">{link.name}</span>
+                            {link.icon ? (
+                                <img 
+                                    src={link.icon} 
+                                    alt={link.name || 'icon'} 
+                                    className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-110" 
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                            ) : null}
+                            <span className="font-semibold text-base text-slate-700 dark:text-slate-200">
+                                {link.name || 'Link'}
+                            </span>
                         </a>
                     ))}
                 </div>
