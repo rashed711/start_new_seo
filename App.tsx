@@ -1,4 +1,5 @@
-import React, { useMemo, useEffect, lazy, Suspense } from 'react';
+
+import React, { useMemo, useEffect, useState, lazy, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { UIProvider, useUI } from './contexts/UIContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -48,6 +49,28 @@ const AppContent: React.FC = () => {
   // React Router Hooks
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Route transition loading state
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [prevPath, setPrevPath] = useState(location.pathname);
+
+  // FIX: Detect location change during render to trigger loader BEFORE the new page paints.
+  // This prevents the "flash" of the new page content before the loader appears.
+  if (location.pathname !== prevPath) {
+      setIsNavigating(true);
+      setPrevPath(location.pathname);
+  }
+
+  useEffect(() => {
+    if (isNavigating) {
+        // Reset scroll position immediately when navigation starts
+        window.scrollTo(0, 0);
+        
+        // Keep the loader visible for a minimum duration to ensure smoothness
+        const timer = setTimeout(() => setIsNavigating(false), 800); 
+        return () => clearTimeout(timer);
+    }
+  }, [isNavigating]);
 
   const displayedRoute = useMemo(() => {
       // Default to /social if configured, else /
@@ -72,7 +95,8 @@ const AppContent: React.FC = () => {
     }
 
     if (isLoading || !restaurantInfo) {
-      return <LoadingOverlay isVisible={true} />;
+      // Return null or basic structure here, Overlay handles the visuals
+      return <div className="min-h-screen bg-slate-50 dark:bg-slate-950"></div>;
     }
     
     // System Activation Check Logic
@@ -113,13 +137,16 @@ const AppContent: React.FC = () => {
   return (
      <>
       <TopProgressBar progress={progress} show={showProgress} />
-      <div className={`transition-opacity duration-300 ${transitionStage === 'in' ? 'opacity-100' : 'opacity-0'}`}>
-        <Suspense fallback={<LoadingOverlay isVisible={true} />}>
+      <div className={`transition-opacity duration-300 ${transitionStage === 'in' && !isNavigating ? 'opacity-100' : 'opacity-0'}`}>
+        <Suspense fallback={<div className="min-h-screen"></div>}>
           {renderPage()}
         </Suspense>
       </div>
       <ToastNotification message={toast.message} isVisible={toast.isVisible} />
-      <LoadingOverlay isVisible={isProcessing && !isLoading} />
+      
+      {/* Global Loading Overlay handled here for all states */}
+      <LoadingOverlay isVisible={(isProcessing && !isLoading) || isLoading || isNavigating} />
+      
       {isChangePasswordModalOpen && currentUser && (
           <ChangePasswordModal
               onClose={() => setIsChangePasswordModalOpen(false)}
