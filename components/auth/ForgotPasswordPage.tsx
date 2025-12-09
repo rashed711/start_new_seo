@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const ForgotPasswordPage: React.FC = () => {
     const { t } = useUI();
@@ -9,10 +9,11 @@ export const ForgotPasswordPage: React.FC = () => {
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const navigate = useNavigate();
 
     const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
         e.preventDefault();
-        window.location.hash = path;
+        navigate(path);
     };
 
     const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -39,7 +40,7 @@ export const ForgotPasswordPage: React.FC = () => {
                 {success ? (
                     <div className="text-center">
                         <p className="text-green-600 dark:text-green-400 mb-4">{success}</p>
-                        <a href="#/login" onClick={(e) => handleNav(e, '/login')} className="font-medium text-primary-600 hover:underline dark:text-primary-500">
+                        <a href="/login" onClick={(e) => handleNav(e, '/login')} className="font-medium text-primary-600 hover:underline dark:text-primary-500">
                             {t.backToLogin}
                         </a>
                     </div>
@@ -69,7 +70,7 @@ export const ForgotPasswordPage: React.FC = () => {
 
                 {!success && (
                     <div className="text-center border-t border-slate-200 dark:border-slate-700 pt-4">
-                        <a href="#/login" onClick={(e) => handleNav(e, '/login')} className="text-sm text-primary-600 hover:underline dark:text-primary-500">
+                        <a href="/login" onClick={(e) => handleNav(e, '/login')} className="text-sm text-primary-600 hover:underline dark:text-primary-500">
                             {t.backToLogin}
                         </a>
                     </div>

@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import type { CartItem, Language, OrderType, RestaurantInfo } from '../types';
 import { PlusIcon, MinusIcon, CloseIcon, TrashIcon } from './icons/Icons';
@@ -6,6 +5,7 @@ import { calculateTotal, formatNumber, calculateItemUnitPrice, calculateItemTota
 import { useCart } from '../contexts/CartContext';
 import { useUI } from '../contexts/UIContext';
 import { useData } from '../contexts/DataContext';
+import { useNavigate } from 'react-router-dom';
 
 interface CartContentsProps {
   isSidebar?: boolean;
@@ -19,6 +19,7 @@ export const CartContents: React.FC<CartContentsProps> = ({
   const { cartItems, updateCartQuantity, clearCart } = useCart();
   const { language, t } = useUI();
   const { restaurantInfo } = useData();
+  const navigate = useNavigate();
 
   const subtotal = useMemo(() => calculateTotal(cartItems), [cartItems]);
   const totalSavings = useMemo(() => calculateTotalSavings(cartItems), [cartItems]);
@@ -27,7 +28,7 @@ export const CartContents: React.FC<CartContentsProps> = ({
 
   const handleCheckout = () => {
       if (onClose) onClose();
-      window.location.hash = `#/checkout`;
+      navigate('/checkout');
   }
 
   const getItemVariantId = (item: CartItem) => {
@@ -54,7 +55,7 @@ export const CartContents: React.FC<CartContentsProps> = ({
         <div className="flex-grow flex items-center justify-center p-4 text-center">
           <div>
             <p className="text-slate-500 dark:text-slate-400">{t.emptyCart}</p>
-            <a href="#menu" onClick={onClose} className="mt-2 text-primary-600 dark:text-primary-400 font-semibold hover:underline">
+            <a href="/" onClick={onClose} className="mt-2 text-primary-600 dark:text-primary-400 font-semibold hover:underline">
               {language === 'ar' ? 'ابدأ التسوق' : 'Start Shopping'}
             </a>
           </div>

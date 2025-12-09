@@ -1,28 +1,31 @@
-
 import React, { useEffect, useState } from 'react';
 import { useUI } from '../../contexts/UIContext';
 import { CheckCircleIcon, CloseIcon } from '../icons/Icons'; 
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const PaymentStatusPage: React.FC = () => {
     const { t, language } = useUI();
+    const navigate = useNavigate();
+    const location = useLocation();
+    
     const [isSuccess, setIsSuccess] = useState<boolean | null>(null);
     const [orderId, setOrderId] = useState<string | null>(null);
     const [errorCode, setErrorCode] = useState<string | null>(null);
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.hash.split('?')[1]);
+        const params = new URLSearchParams(location.search);
         const successParam = params.get('success');
-        const orderIdParam = params.get('order'); // Paymob returns its own order ID
+        const orderIdParam = params.get('order'); 
         const errorCodeParam = params.get('error_code');
 
         setIsSuccess(successParam === 'true');
         setOrderId(orderIdParam);
         setErrorCode(errorCodeParam);
-    }, []);
+    }, [location]);
 
     const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
         e.preventDefault();
-        window.location.hash = path;
+        navigate(path);
     };
 
     if (isSuccess === null) {
@@ -65,14 +68,14 @@ export const PaymentStatusPage: React.FC = () => {
 
                  <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                     <a 
-                        href="#/"
+                        href="/"
                         onClick={(e) => handleNav(e, '/')}
                         className="w-full sm:w-auto bg-primary-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-primary-700 transition-colors"
                     >
                         {t.backToHome}
                     </a>
                      <a 
-                        href="#/profile"
+                        href="/profile"
                         onClick={(e) => handleNav(e, '/profile')}
                         className="w-full sm:w-auto bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                     >

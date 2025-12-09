@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Language, RestaurantInfo } from '../types';
@@ -55,14 +54,14 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
             {t.viewMenu}
           </a>
           <a 
-            href="#/track"
+            href="/track"
             onClick={(e) => handleNav(e, '/track')}
             className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white text-white font-bold py-2 px-4 sm:py-2.5 sm:px-6 rounded-full text-sm sm:text-base transition-colors transform hover:scale-105 inline-block shadow-lg whitespace-nowrap"
           >
             {t.trackOrder}
           </a>
            <a 
-            href="#/social"
+            href="/social"
             onClick={(e) => handleNav(e, '/social')}
             className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white text-white font-bold py-2 px-4 sm:py-2.5 sm:px-6 rounded-full text-sm sm:text-base transition-colors transform hover:scale-105 inline-block shadow-lg whitespace-nowrap"
           >

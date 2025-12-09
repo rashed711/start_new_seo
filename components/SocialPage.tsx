@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRightIcon } from './icons/Icons';
@@ -45,7 +44,7 @@ export const SocialPage: React.FC = () => {
 
                 <div>
                     <a
-                        href="#/"
+                        href="/"
                         onClick={(e) => handleNav(e, '/')}
                         className="bg-primary-500 hover:bg-primary-600 text-white font-bold py-4 px-10 rounded-full text-lg transition-transform transform hover:scale-105 inline-flex items-center justify-center gap-2 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40"
                     >

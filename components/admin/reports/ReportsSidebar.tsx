@@ -3,6 +3,7 @@ import { useUI } from '../../../contexts/UIContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { ChartBarIcon, ClipboardListIcon, CollectionIcon, CurrencyDollarIcon, ShoppingCartIcon, TruckIcon, UserGroupIcon, UserIcon } from '../../icons/Icons'; // Assuming CurrencyDollarIcon etc are created
 import type { Permission } from '../../../types';
+import { useNavigate } from 'react-router-dom';
 
 // A simple placeholder for icons that might not exist yet
 const PlaceholderIcon: React.FC<{className?: string}> = ({className}) => <div className={`w-5 h-5 bg-slate-300 rounded ${className}`} />;
@@ -26,10 +27,11 @@ interface ReportsSidebarProps {
 export const ReportsSidebar: React.FC<ReportsSidebarProps> = ({ activeReport }) => {
     const { t } = useUI();
     const { hasPermission } = useAuth();
+    const navigate = useNavigate();
 
     const handleNav = (e: React.MouseEvent, path: string) => {
         e.preventDefault();
-        window.location.hash = `#/admin/reports/${path}`;
+        navigate(`/admin/reports/${path}`);
     };
 
     return (
@@ -39,7 +41,7 @@ export const ReportsSidebar: React.FC<ReportsSidebarProps> = ({ activeReport }) 
                     hasPermission(item.permission) && (
                         <a
                             key={item.id}
-                            href={`#/admin/reports/${item.id}`}
+                            href={`/admin/reports/${item.id}`}
                             onClick={(e) => handleNav(e, item.id)}
                             className={`flex items-center p-3 my-1 rounded-lg transition-colors duration-200 text-sm font-medium shrink-0 ${
                                 activeReport === item.id

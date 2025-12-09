@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -9,6 +9,7 @@ declare const google: any;
 export const LoginPage: React.FC = () => {
     const { t, isProcessing } = useUI();
     const { unifiedLogin, registerWithEmailPassword, loginWithGoogle } = useAuth();
+    const navigate = useNavigate();
 
     const [formType, setFormType] = useState<'login' | 'register'>('login');
     const [error, setError] = useState('');
@@ -61,7 +62,7 @@ export const LoginPage: React.FC = () => {
 
     const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
         e.preventDefault();
-        window.location.hash = path;
+        navigate(path);
     };
 
     const handleUnifiedLogin = async (e: React.FormEvent) => {
@@ -220,7 +221,7 @@ export const LoginPage: React.FC = () => {
                     {error && <p className="text-sm text-red-500 text-center mt-4">{error}</p>}
                     
                      <div className="text-center border-t border-slate-200 dark:border-slate-700 pt-4 mt-6">
-                        <a href="#/" onClick={(e) => handleNav(e, '/')} className="text-sm text-primary-600 hover:underline dark:text-primary-500">
+                        <a href="/" onClick={(e) => handleNav(e, '/')} className="text-sm text-primary-600 hover:underline dark:text-primary-500">
                             {t.backToMenu}
                         </a>
                     </div>

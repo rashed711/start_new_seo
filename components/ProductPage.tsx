@@ -1,6 +1,5 @@
-
-import React, { useState, useEffect, useMemo, useSyncExternalStore, useCallback } from 'react';
-// FIX: Import the 'Product' type to resolve 'Cannot find name' errors.
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { Product } from '../types';
 import { Header } from './Header';
 import { Footer } from './Footer';
@@ -13,30 +12,19 @@ import { ProductList } from './ProductList';
 import { CartSidebar } from './CartSidebar';
 import { LoadingOverlay } from './LoadingOverlay';
 
-// Helper to subscribe to hash changes
-function subscribe(callback: () => void) {
-  window.addEventListener('hashchange', callback);
-  return () => window.removeEventListener('hashchange', callback);
-}
-
-// Helper to get current hash
-function getSnapshot() {
-  return window.location.hash;
-}
-
-// Custom hook to parse product ID from hash
+// Custom hook to parse product ID from pathname
 const useProductId = (): number | null => {
-  const hash = useSyncExternalStore(subscribe, getSnapshot, () => window.location.hash);
-  const match = hash.match(/^#\/product\/(\d+)/);
+  const { pathname } = useLocation();
+  const match = pathname.match(/^\/product\/(\d+)/);
   return match ? parseInt(match[1], 10) : null;
 };
-
 
 export const ProductPage: React.FC = () => {
     const { t, language } = useUI();
     const productId = useProductId();
     const { products, promotions, restaurantInfo } = useData();
     const { addToCart } = useCart();
+    const navigate = useNavigate();
     
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [quantity, setQuantity] = useState(1);
@@ -115,8 +103,8 @@ export const ProductPage: React.FC = () => {
     }, [promotions]);
 
     const handleProductClick = useCallback((clickedProduct: Product) => {
-        window.location.hash = `#/product/${clickedProduct.id}`;
-    }, []);
+        navigate(`/product/${clickedProduct.id}`);
+    }, [navigate]);
 
     const handleAddToCartFromList = useCallback((clickedProduct: Product, quantity: number, options?: { [key: string]: string }) => {
         addToCart(clickedProduct, quantity, options);
@@ -135,7 +123,7 @@ export const ProductPage: React.FC = () => {
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
                     <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100">Product Not Found</h1>
                     <p className="mt-4 text-slate-600 dark:text-slate-400">Sorry, we couldn't find the product you're looking for.</p>
-                    <a href="#/" onClick={(e) => { e.preventDefault(); window.location.hash = '#/'; }} className="mt-6 bg-primary-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-primary-700">
+                    <a href="/" onClick={(e) => { e.preventDefault(); navigate('/'); }} className="mt-6 bg-primary-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-primary-700">
                         Back to Menu
                     </a>
                 </div>

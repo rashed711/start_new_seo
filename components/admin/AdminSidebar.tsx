@@ -1,10 +1,10 @@
-
 import React from 'react';
 import type { Permission, User, UserRole, Role } from '../../types';
 import { ClipboardListIcon, CollectionIcon, UsersIcon, CloseIcon, ShieldCheckIcon, BookmarkAltIcon, ChartBarIcon, TagIcon, CogIcon, CashRegisterIcon, LogoutIcon, HomeIcon, BellIcon, ArchiveIcon, CurrencyDollarIcon, UserGroupIcon, BankIcon } from '../icons/Icons';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
+import { useNavigate } from 'react-router-dom';
 
 type AdminTab = 'dashboard' | 'orders' | 'cashier' | 'reports' | 'productList' | 'classifications' | 'promotions' | 'staff' | 'roles' | 'settings' | 'treasury' | 'customers' | 'suppliers' | 'purchaseInvoices' | 'salesInvoices';
 
@@ -21,6 +21,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = (props) => {
     const { language, t } = useUI();
     const { currentUser, logout, hasPermission, roles } = useAuth();
     const { restaurantInfo } = useData();
+    const navigate = useNavigate();
 
     const navItems = {
         operations: [
@@ -46,13 +47,14 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = (props) => {
 
     const handleNav = (e: React.MouseEvent, path: string) => {
         e.preventDefault();
-        window.location.hash = path;
+        navigate(path);
         setIsOpen(false);
     };
 
     const handleTabChange = (e: React.MouseEvent, tab: AdminTab) => {
         e.preventDefault();
         setActiveTab(tab); 
+        navigate(`/admin/${tab}`);
         setIsOpen(false);
     };
     
@@ -71,7 +73,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = (props) => {
                 isOpen ? 'translate-x-0' : (language === 'ar' ? 'translate-x-full' : '-translate-x-full')
             }`}>
                 <div className="flex items-center justify-between px-4 h-20 border-b dark:border-slate-700">
-                    <a href="#/" onClick={(e) => handleNav(e, '/')} className="flex items-center gap-3">
+                    <a href="/" onClick={(e) => handleNav(e, '/')} className="flex items-center gap-3">
                         <img src={restaurantInfo.logo} alt="Logo" className="h-10 w-10 rounded-full" />
                         <span className="text-lg font-bold text-slate-800 dark:text-slate-100">{restaurantInfo.name[language]}</span>
                     </a>
@@ -103,7 +105,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = (props) => {
                                    {visibleItems.map(item => (
                                         <a
                                             key={item.id}
-                                            href={`#/admin/${item.id}`}
+                                            href={`/admin/${item.id}`}
                                             onClick={(e) => handleTabChange(e, item.id as AdminTab)}
                                             className={`w-full flex items-center p-3 my-1 rounded-lg transition-colors duration-200 text-sm font-medium border-s-4 text-start ${
                                                 activeTab === item.id || (activeTab === 'classifications' && item.id === 'productList') || (activeTab === 'promotions' && item.id === 'productList')

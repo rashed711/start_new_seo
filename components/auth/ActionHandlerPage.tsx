@@ -1,18 +1,19 @@
-
 import React, { useState, useEffect } from 'react';
 import { auth } from '../../firebase';
 import { applyActionCode } from 'firebase/auth';
 import { useUI } from '../../contexts/UIContext';
-import { CheckCircleIcon, CloseIcon } from '../icons/Icons'; // Assuming CloseIcon exists
+import { CheckCircleIcon, CloseIcon } from '../icons/Icons';
+import { useNavigate } from 'react-router-dom';
 
 export const ActionHandlerPage: React.FC = () => {
     const { t, language } = useUI();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [errorMessage, setErrorMessage] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleAction = async () => {
-            const params = new URLSearchParams(window.location.hash.split('?')[1]);
+            const params = new URLSearchParams(window.location.search);
             const mode = params.get('mode');
             const actionCode = params.get('oobCode');
 
@@ -28,7 +29,6 @@ export const ActionHandlerPage: React.FC = () => {
                         await applyActionCode(auth, actionCode);
                         setStatus('success');
                         break;
-                    // You can add other modes like 'resetPassword' here in the future
                     default:
                         throw new Error('Unsupported action mode.');
                 }
@@ -44,7 +44,7 @@ export const ActionHandlerPage: React.FC = () => {
 
     const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
         e.preventDefault();
-        window.location.hash = path;
+        navigate(path);
     };
 
     const renderContent = () => {
@@ -62,7 +62,7 @@ export const ActionHandlerPage: React.FC = () => {
                             {language === 'ar' ? 'يمكنك الآن تسجيل الدخول باستخدام حسابك الجديد.' : 'You can now sign in with your new account.'}
                         </p>
                         <a 
-                            href="#/login" 
+                            href="/login" 
                             onClick={(e) => handleNav(e, '/login')}
                             className="mt-6 inline-block bg-primary-600 text-white font-bold py-2.5 px-6 rounded-lg hover:bg-primary-700 transition-colors"
                         >
@@ -83,7 +83,7 @@ export const ActionHandlerPage: React.FC = () => {
                             {language === 'ar' ? 'لا يمكن إكمال هذا الإجراء. قد يكون الرابط غير صالح أو منتهي الصلاحية.' : 'This action could not be completed. The link may be invalid or expired.'}
                         </p>
                          <a 
-                            href="#/login" 
+                            href="/login" 
                             onClick={(e) => handleNav(e, '/login')}
                             className="mt-6 inline-block bg-primary-600 text-white font-bold py-2.5 px-6 rounded-lg hover:bg-primary-700 transition-colors"
                         >

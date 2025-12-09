@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useUI } from '../contexts/UIContext';
 import { useData } from '../contexts/DataContext';
@@ -23,9 +22,9 @@ export const Footer: React.FC = () => {
                     <img src={restaurantInfo.logo} alt="logo" className="h-12 w-12 rounded-full" />
                     <p className="text-lg font-semibold text-slate-700 dark:text-slate-200">{restaurantInfo.name[language]}</p>
                     <div className="flex items-center gap-4 text-sm">
-                        <a href="#/track" onClick={(e) => handleNav(e, '/track')} className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{t.trackOrder}</a>
+                        <a href="/track" onClick={(e) => handleNav(e, '/track')} className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{t.trackOrder}</a>
                         <span className="text-slate-300 dark:text-slate-600">|</span>
-                        <a href="#/social" onClick={(e) => handleNav(e, '/social')} className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{t.contactUs}</a>
+                        <a href="/social" onClick={(e) => handleNav(e, '/social')} className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{t.contactUs}</a>
                     </div>
                     <p className="text-sm mt-2">&copy; {new Date().getFullYear()} {restaurantInfo.name[language]}. All rights reserved.</p>
                 </div>

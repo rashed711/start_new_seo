@@ -1,13 +1,14 @@
 // --- Standard Service Worker Logic (Caching) ---
 
-const CACHE_NAME = 'fresco-cache-v5';
+// Bump the version to force update on clients and clean up old caches
+const CACHE_NAME = 'start-computer-cache-v10';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json?v=2',
-  '/icons/icon-192x192.png?v=5', // Updated version
-  '/icons/icon-512x512.png?v=5', // Updated version
-  '/sound/new_order_sound.mp3' // Cache the notification sound
+  '/icons/icon-192x192.png?v=6',
+  '/icons/icon-512x512.png?v=6',
+  '/sound/new_order_sound.mp3'
 ];
 
 self.addEventListener('install', event => {
@@ -21,6 +22,7 @@ self.addEventListener('install', event => {
         console.error('Failed to cache resources during install:', err);
       })
   );
+  // Force the waiting service worker to become the active service worker
   self.skipWaiting();
 });
 
@@ -37,6 +39,7 @@ self.addEventListener('activate', event => {
       );
     })
   );
+  // Take control of all clients immediately
   return self.clients.claim();
 });
 
@@ -44,45 +47,73 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Don't cache non-GET requests or chrome-extension URLs.
+  // 1. Ignore non-GET requests and chrome-extension schemes
   if (request.method !== 'GET' || url.protocol.startsWith('chrome-extension')) {
     event.respondWith(fetch(request));
     return;
   }
 
-  // For API GET requests, use a Network-First, falling back to Cache strategy.
-  if (url.pathname.startsWith('/api/')) {
+  // 2. Navigation Requests (SPA Support)
+  // If the request is for a page navigation (HTML), serve index.html from cache.
+  // This fixes 404 errors when refreshing pages like /track or /social.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/index.html').then((response) => {
+        return response || fetch(request).catch(() => {
+            // Fallback if offline and index.html is missing (rare)
+            return caches.match('/index.html');
+        });
+      })
+    );
+    return;
+  }
+
+  // 3. Network-First Strategy for APIs and Uploaded Images
+  // This ensures users always get the latest data and product images.
+  if (url.pathname.startsWith('/api/') || url.pathname.includes('/uploads/')) {
     event.respondWith(
       fetch(request)
         .then(networkResponse => {
-          // If network is successful, update cache and return response
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, networkResponse.clone());
+          // Verify response is valid
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
             return networkResponse;
+          }
+          // Clone and cache the fresh copy
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(request, responseToCache);
           });
+          return networkResponse;
         })
         .catch(() => {
-          // If network fails, return from cache if available
-          return caches.match(request);
+          // If network fails, return cached version
+          return caches.match(request).then(cachedResponse => {
+              if (cachedResponse) {
+                  return cachedResponse;
+              }
+              return Promise.reject('No cache and no network');
+          });
         })
     );
     return;
   }
 
-  // For other GET requests (static assets), use a Cache-First strategy.
+  // 4. Cache-First Strategy for Static Assets (JS, CSS, Icons)
+  // These files have unique hashes in filenames or versions, so they are safe to cache aggressively.
   event.respondWith(
     caches.match(request).then((response) => {
-      // If we have a cached response, return it.
       if (response) {
         return response;
       }
-      // Otherwise, fetch from the network.
       return fetch(request).then((networkResponse) => {
-        // And cache the new response for next time.
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, networkResponse.clone());
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
+        }
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseToCache);
         });
+        return networkResponse;
       });
     })
   );
@@ -96,13 +127,13 @@ self.addEventListener('push', event => {
   
   const options = {
     body: data.body,
-    icon: '/icons/icon-192x192.png', // Main app icon
-    badge: '/icons/icon-192x192.png', // Icon for small spaces like Android status bar
-    vibrate: [200, 100, 200, 100, 200], // Vibration pattern
-    tag: data.orderId || 'new-notification', // An ID for the notification
-    renotify: true, // Allow replacing old notifications with the same tag
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png',
+    vibrate: [200, 100, 200, 100, 200],
+    tag: data.orderId || 'new-notification',
+    renotify: true,
     data: {
-      orderId: data.orderId, // Pass orderId if available
+      orderId: data.orderId,
     },
     sound: data.with_sound ? '/sound/new_order_sound.mp3' : undefined,
     actions: [
@@ -116,23 +147,18 @@ self.addEventListener('push', event => {
 });
 
 self.addEventListener('notificationclick', event => {
-  event.notification.close(); // Close the notification
+  event.notification.close();
 
   const orderId = event.notification.data?.orderId;
-  // Construct a URL that the frontend routing can interpret for deep-linking
-  const urlToOpen = orderId ? `/#/admin/orders?view=${orderId}` : '/#/admin/orders';
+  const urlToOpen = orderId ? `/admin/orders?view=${orderId}` : '/admin/orders';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // If a window for the app is already open, focus it and navigate.
       for (const client of clientList) {
-        // Check if the client is visible and has the focus method
         if (client.url.includes('/') && 'focus' in client) {
-          // Navigate the focused client to the new URL
           return client.focus().then(c => c.navigate(urlToOpen));
         }
       }
-      // If no window is open, open a new one.
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }

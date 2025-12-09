@@ -2,14 +2,16 @@ import React from 'react';
 import { useUI } from '../contexts/UIContext';
 import { useData } from '../contexts/DataContext';
 import { LockClosedIcon, LoginIcon } from './icons/Icons';
+import { useNavigate } from 'react-router-dom';
 
 export const DeactivatedScreen: React.FC = () => {
     const { language, t } = useUI();
     const { restaurantInfo } = useData();
+    const navigate = useNavigate();
 
     const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
         e.preventDefault();
-        window.location.hash = path;
+        navigate(path);
     };
 
     if (!restaurantInfo) {
@@ -39,7 +41,7 @@ export const DeactivatedScreen: React.FC = () => {
                 </p>
                 <div className="mt-8">
                     <a
-                        href="#/login"
+                        href="/login"
                         onClick={(e) => handleNav(e, '/login')}
                         className="bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-6 rounded-full text-base transition-transform transform hover:scale-105 inline-flex items-center gap-2 shadow-lg shadow-primary-500/30"
                     >

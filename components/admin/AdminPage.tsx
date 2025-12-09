@@ -1,5 +1,5 @@
-
 import React, { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { Language, Product, RestaurantInfo, Order, OrderStatus, User, UserRole, Promotion, Permission, Category, Tag, CartItem, SocialLink, LocalizedString, OrderStatusColumn, OrderType, Role } from '../../types';
 import { MenuAlt2Icon, BellIcon, BellSlashIcon, ShieldCheckIcon, UserIcon, HomeIcon, LogoutIcon } from '../icons/Icons';
 
@@ -132,35 +132,35 @@ export const AdminPage: React.FC<AdminPageProps> = ({ activeSubRoute, reportSubR
 
     const [transitionStage, setTransitionStage] = useState<'in' | 'out'>('in');
     const [displayedTab, setDisplayedTab] = useState(activeTab);
+    const navigate = useNavigate();
+    const location = useLocation();
 
      const handleNav = (e: React.MouseEvent, path: string) => {
         e.preventDefault();
         setIsUserMenuOpen(false); // Close menu on navigation
-        window.location.hash = path;
+        navigate(path);
     };
 
 
-    // Handle viewing order from notification click
+    // Handle viewing order from notification click (query param)
      useEffect(() => {
         const checkUrlForOrder = () => {
-            const hash = window.location.hash;
-            if (hash.includes('?view=')) {
-                const orderId = hash.split('?view=')[1];
-                if (orderId) {
-                    if (allOrders.length > 0) {
-                        const orderToView = allOrders.find(o => o.id === orderId);
-                        if (orderToView) {
-                            setViewingOrder(orderToView);
-                            // Clean up URL to prevent modal from re-opening on every render
-                            window.history.replaceState(null, document.title, window.location.pathname + window.location.search + '#/admin/orders');
-                        }
+            const params = new URLSearchParams(location.search);
+            const orderId = params.get('view');
+            
+            if (orderId) {
+                if (allOrders.length > 0) {
+                    const orderToView = allOrders.find(o => o.id === orderId);
+                    if (orderToView) {
+                        setViewingOrder(orderToView);
+                        // Clean up URL
+                        navigate('/admin/orders', { replace: true });
                     }
                 }
             }
         };
-        // Run on initial load and whenever orders are updated
         checkUrlForOrder();
-    }, [allOrders, setViewingOrder]);
+    }, [allOrders, setViewingOrder, location.search, navigate]);
 
     useEffect(() => {
         if (viewingProduct) {
@@ -191,7 +191,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ activeSubRoute, reportSubR
     }, [activeSubRoute]);
 
     const setTab = (tab: AdminTab) => {
-        window.location.hash = `#/admin/${tab}`;
+        navigate(`/admin/${tab}`);
     };
 
     const onChangePasswordClick = () => setIsChangePasswordModalOpen(true);
@@ -210,10 +210,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ activeSubRoute, reportSubR
                 setTab(firstAvailableTab.id as AdminTab);
                 showToast(t.permissionsUpdatedRedirect);
             } else {
-                window.location.hash = '#/profile';
+                navigate('/profile');
             }
         }
-    }, [activeTab, hasPermission, showToast, t.permissionsUpdatedRedirect]);
+    }, [activeTab, hasPermission, showToast, t.permissionsUpdatedRedirect, navigate]);
 
     const PermissionDeniedComponent = () => (
         <div className="flex flex-col items-center justify-center text-center p-8 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-dashed border-yellow-300 dark:border-yellow-700 rounded-lg max-w-2xl mx-auto mt-10">
@@ -551,7 +551,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ activeSubRoute, reportSubR
                     <button onClick={() => setSidebarOpen(true)} className="p-2 md:hidden">
                         <MenuAlt2Icon className="w-6 h-6"/>
                     </button>
-                    <a href="#/admin" onClick={(e) => handleNav(e, '/admin')}>
+                    <a href="/admin" onClick={(e) => handleNav(e, '/admin')}>
                         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{t.adminPanel}</h1>
                     </a>
                 </div>
@@ -576,11 +576,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ activeSubRoute, reportSubR
                         </button>
                         {isUserMenuOpen && (
                              <div className="absolute top-full mt-2 end-0 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-fade-in py-1">
-                                <a href="#/profile" onClick={(e) => handleNav(e, '/profile')} className="flex items-center gap-3 w-full text-start px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                <a href="/profile" onClick={(e) => handleNav(e, '/profile')} className="flex items-center gap-3 w-full text-start px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                                     <UserIcon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                                     <span>{t.myProfile}</span>
                                 </a>
-                                <a href="#/" onClick={(e) => handleNav(e, '/')} className="flex items-center gap-3 w-full text-start px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                <a href="/" onClick={(e) => handleNav(e, '/')} className="flex items-center gap-3 w-full text-start px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                                     <HomeIcon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                                     <span>{t.backToMenu}</span>
                                 </a>

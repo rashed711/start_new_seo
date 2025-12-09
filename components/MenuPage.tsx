@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Product, CartItem, Order, OrderStatus, OrderType, Category, Promotion } from '../types';

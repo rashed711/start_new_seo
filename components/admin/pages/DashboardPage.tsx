@@ -19,13 +19,15 @@ import {
     BankIcon
 } from '../../icons/Icons';
 import type { Order, Permission } from '../../../types';
+import { useNavigate } from 'react-router-dom';
 
 
 // Quick Link Component - Updated for larger size
 const QuickLink: React.FC<{ title: string; path: string; icon: React.FC<any>; }> = ({ title, path, icon: Icon }) => {
+    const navigate = useNavigate();
     const handleNav = (e: React.MouseEvent) => {
         e.preventDefault();
-        window.location.hash = path;
+        navigate(path);
     };
     return (
         <a href={path} onClick={handleNav} className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:shadow-xl transition-all transform hover:-translate-y-1.5">
@@ -41,6 +43,7 @@ export const DashboardPage: React.FC = () => {
     const { hasPermission } = useAuth();
     const { orders, setViewingOrder } = useOrders();
     const { restaurantInfo } = useData();
+    const navigate = useNavigate();
 
     // Replicating navItems structure for use in Quick Actions
     const navItems = {
@@ -95,7 +98,7 @@ export const DashboardPage: React.FC = () => {
                             <QuickLink 
                                 key={item.id}
                                 title={item.label} 
-                                path={`#/admin/${item.id}`} 
+                                path={`/admin/${item.id}`} 
                                 icon={item.icon} 
                             />
                         )
@@ -108,7 +111,7 @@ export const DashboardPage: React.FC = () => {
                  <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t.recentOrders}</h2>
-                        <a href="#/admin/orders" onClick={(e) => { e.preventDefault(); window.location.hash = '#/admin/orders'; }} className="text-sm font-semibold text-primary-600 hover:underline">{t.viewAll}</a>
+                        <a href="/admin/orders" onClick={(e) => { e.preventDefault(); navigate('/admin/orders'); }} className="text-sm font-semibold text-primary-600 hover:underline">{t.viewAll}</a>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full">

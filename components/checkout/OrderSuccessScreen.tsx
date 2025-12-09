@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { CheckCircleIcon, UserIcon, CopyIcon, CheckIcon } from '../icons/Icons';
 import { CopiedButton } from '../CopiedButton';
+import { useNavigate } from 'react-router-dom';
 
 interface OrderSuccessScreenProps {
     orderId: string;
@@ -14,10 +14,11 @@ export const OrderSuccessScreen: React.FC<OrderSuccessScreenProps> = ({ orderId 
     const { t, language } = useUI();
     const { currentUser } = useAuth();
     const { restaurantInfo } = useData();
+    const navigate = useNavigate();
 
     const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
         e.preventDefault();
-        window.location.hash = path;
+        navigate(path);
     };
 
     return (
@@ -51,7 +52,7 @@ export const OrderSuccessScreen: React.FC<OrderSuccessScreenProps> = ({ orderId 
             )}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
                 <a 
-                    href="#/track"
+                    href="/track"
                     onClick={(e) => handleNav(e, '/track')}
                     className="w-full sm:w-auto bg-primary-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-primary-700 transition-colors shadow-md"
                 >
@@ -59,7 +60,7 @@ export const OrderSuccessScreen: React.FC<OrderSuccessScreenProps> = ({ orderId 
                 </a>
                 {currentUser ? (
                      <a 
-                        href="#/profile"
+                        href="/profile"
                         onClick={(e) => handleNav(e, '/profile')}
                         className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                     >
@@ -67,7 +68,7 @@ export const OrderSuccessScreen: React.FC<OrderSuccessScreenProps> = ({ orderId 
                     </a>
                 ) : (
                      <a 
-                        href="#/"
+                        href="/"
                         onClick={(e) => handleNav(e, '/')}
                         className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                     >

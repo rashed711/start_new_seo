@@ -1,4 +1,3 @@
-
 import React, { useMemo, useEffect, lazy, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { UIProvider, useUI } from './contexts/UIContext';
