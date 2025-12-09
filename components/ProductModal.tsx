@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Product, Promotion } from '../types';
 import { StarIcon, PlusIcon } from './icons/Icons';
@@ -92,7 +91,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 <span className="text-slate-700 dark:text-slate-300 font-semibold ms-1 text-sm">{formatNumber(product.rating)}</span>
               </div>
             </div>
-            <p className="text-slate-600 dark:text-slate-300 text-sm mb-3 whitespace-pre-wrap">{product.description[language]}</p>
+            
+            {/* Formatted Description */}
+            <div 
+                className="text-slate-600 dark:text-slate-300 text-sm mb-3 leading-relaxed whitespace-pre-line [&_b]:font-bold [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ms-1"
+                dangerouslySetInnerHTML={{ __html: product.description[language] }}
+            />
             
             <div className="flex-grow space-y-3 my-3">
               {product.options?.map(option => (

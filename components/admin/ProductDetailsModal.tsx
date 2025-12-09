@@ -87,11 +87,11 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ produc
 
                     <div>
                         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t.descriptionEn}</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{product.description.en}</p>
+                        <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line [&_b]:font-bold [&_ul]:list-disc [&_ul]:list-inside" dangerouslySetInnerHTML={{ __html: product.description.en }} />
                     </div>
                      <div>
                         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t.descriptionAr}</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{product.description.ar}</p>
+                        <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line [&_b]:font-bold [&_ul]:list-disc [&_ul]:list-inside" dangerouslySetInnerHTML={{ __html: product.description.ar }} />
                     </div>
                     
                     {productTags.length > 0 && (

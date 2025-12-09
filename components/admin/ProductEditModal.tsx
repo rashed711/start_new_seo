@@ -114,6 +114,42 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({ product, onC
         }
     };
 
+    // --- Rich Text Helper ---
+    const insertAtCursor = (fieldName: string, openTag: string, closeTag: string = '') => {
+        const textarea = document.getElementsByName(fieldName)[0] as HTMLTextAreaElement;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const before = text.substring(0, start);
+        const selection = text.substring(start, end);
+        const after = text.substring(end);
+
+        const newValue = before + openTag + selection + closeTag + after;
+        
+        // Update state manually since we are manipulating the DOM value
+        const [field, lang] = fieldName.split('.');
+        setFormData(prev => ({
+            ...prev,
+            [field]: { ...(prev[field as keyof typeof prev] as LocalizedString), [lang]: newValue }
+        }));
+
+        // Restore focus and cursor position
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + openTag.length, end + openTag.length);
+        }, 0);
+    };
+
+    const Toolbar = ({ fieldName }: { fieldName: string }) => (
+        <div className="flex gap-2 mb-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-md border border-slate-200 dark:border-slate-600">
+            <button type="button" onClick={() => insertAtCursor(fieldName, '<b>', '</b>')} className="px-2 py-1 bg-white dark:bg-slate-600 rounded text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-500 border border-slate-300 dark:border-slate-500" title="Bold">B</button>
+            <button type="button" onClick={() => insertAtCursor(fieldName, '<ul>\n<li>', '</li>\n</ul>')} className="px-2 py-1 bg-white dark:bg-slate-600 rounded text-xs hover:bg-slate-200 dark:hover:bg-slate-500 border border-slate-300 dark:border-slate-500" title="Bulleted List">List</button>
+            <button type="button" onClick={() => insertAtCursor(fieldName, '<br/>\n')} className="px-2 py-1 bg-white dark:bg-slate-600 rounded text-xs hover:bg-slate-200 dark:hover:bg-slate-500 border border-slate-300 dark:border-slate-500" title="New Line">New Line</button>
+            <button type="button" onClick={() => insertAtCursor(fieldName, '<h3 class="text-lg font-bold text-primary-600">', '</h3>\n')} className="px-2 py-1 bg-white dark:bg-slate-600 rounded text-xs font-bold text-primary-600 hover:bg-slate-200 dark:hover:bg-slate-500 border border-slate-300 dark:border-slate-500" title="Heading">Title</button>
+        </div>
+    );
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -211,16 +247,21 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({ product, onC
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.code}</label>
                     <input type="text" name="code" value={formData.code} onChange={handleTextChange} className="w-full p-2 border rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required />
                 </div>
+                
+                {/* Descriptions with Rich Text Toolbar */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.descriptionEn}</label>
-                        <textarea name="description.en" value={formData.description.en} onChange={handleTextChange} rows={3} className="w-full p-2 border rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required></textarea>
+                        <Toolbar fieldName="description.en" />
+                        <textarea name="description.en" value={formData.description.en} onChange={handleTextChange} rows={5} className="w-full p-2 border rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 font-mono text-sm" required></textarea>
                     </div>
                      <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.descriptionAr}</label>
-                        <textarea name="description.ar" value={formData.description.ar} onChange={handleTextChange} rows={3} className="w-full p-2 border rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required></textarea>
+                        <Toolbar fieldName="description.ar" />
+                        <textarea name="description.ar" value={formData.description.ar} onChange={handleTextChange} rows={5} className="w-full p-2 border rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 font-mono text-sm" required></textarea>
                     </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.price}</label>

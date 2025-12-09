@@ -174,7 +174,12 @@ export const ProductPage: React.FC = () => {
                                 <span className="text-slate-400">·</span>
                                 <span className="text-sm font-medium text-slate-500">{product.code}</span>
                             </div>
-                            <p className="text-slate-600 dark:text-slate-300 mb-6 whitespace-pre-wrap">{product.description[language]}</p>
+                            
+                            {/* Rich Text Description */}
+                            <div 
+                                className="text-slate-600 dark:text-slate-300 mb-6 leading-loose text-base space-y-2 whitespace-pre-line [&_b]:font-black [&_strong]:font-black [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ms-2 [&_li]:mb-1 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-slate-800 [&_h3]:dark:text-slate-100 [&_h3]:mt-4 [&_h3]:mb-2"
+                                dangerouslySetInnerHTML={{ __html: product.description[language] }}
+                            />
                             
                             {/* Options */}
                             <div className="space-y-5 mb-6">
