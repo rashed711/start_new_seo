@@ -224,13 +224,42 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (!hasPermission('delete_order') || !window.confirm(t.confirmDeleteOrder)) return false;
         setIsProcessing(true);
         try {
+            // Find the order to check if it has an image to delete
+            const orderToDelete = orders.find(o => o.id === orderId);
+            let imagePathToDelete = null;
+
+            if (orderToDelete?.paymentReceiptUrl) {
+                // Extract relative path from the full URL
+                try {
+                    // Assuming API_BASE_URL is like https://site.com/api/
+                    const baseUrl = new URL(APP_CONFIG.API_BASE_URL);
+                    const origin = baseUrl.origin; // https://site.com
+                    
+                    // If the URL contains the origin, strip it to get relative path
+                    // example: https://site.com/uploads/receipt.png -> uploads/receipt.png
+                    if (orderToDelete.paymentReceiptUrl.startsWith(origin)) {
+                        imagePathToDelete = orderToDelete.paymentReceiptUrl.replace(origin + '/', '');
+                    } else {
+                        // Fallback if it's already relative or different format
+                        imagePathToDelete = orderToDelete.paymentReceiptUrl;
+                    }
+                } catch (e) {
+                    console.error("Error parsing receipt URL", e);
+                    imagePathToDelete = orderToDelete.paymentReceiptUrl;
+                }
+            }
+
             const response = await fetch(`${APP_CONFIG.API_BASE_URL}delete_order.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: orderId })
+                body: JSON.stringify({ 
+                    id: orderId,
+                    image_path: imagePathToDelete // Send the image path to backend for deletion
+                })
             });
-            // FIX: Corrected translation key
+            
             if (!response.ok || !(await response.json()).success) throw new Error(t.orderDeleteFailed);
+            
             setOrders(prev => prev.filter(o => o.id !== orderId));
             
             // Close the viewing modal if the deleted order was being viewed
@@ -239,13 +268,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             showToast(t.orderDeletedSuccess);
             return true;
         } catch (error: any) {
-            // FIX: Corrected translation key
             showToast(error.message || t.orderDeleteFailed);
             return false;
         } finally {
             setIsProcessing(false);
         }
-    }, [hasPermission, t, showToast, setIsProcessing]);
+    }, [hasPermission, t, showToast, setIsProcessing, orders]);
     
     const value: OrderContextType = {
         orders,
